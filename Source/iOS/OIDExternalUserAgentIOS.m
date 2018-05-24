@@ -88,27 +88,30 @@ static id<OIDSafariViewControllerFactory> __nullable gSafariViewControllerFactor
   BOOL openedSafari = NO;
   NSURL *requestURL = [request externalUserAgentRequestURL];
 
-  if (@available(iOS 11.0, *)) {
-    NSString *redirectScheme = request.redirectScheme;
-    SFAuthenticationSession* authenticationVC =
-        [[SFAuthenticationSession alloc] initWithURL:requestURL
-                                   callbackURLScheme:redirectScheme
-                                   completionHandler:^(NSURL * _Nullable callbackURL,
-                                                       NSError * _Nullable error) {
-      _authenticationVC = nil;
-      if (callbackURL) {
-        [_session resumeExternalUserAgentFlowWithURL:callbackURL];
-      } else {
-        NSError *safariError =
-            [OIDErrorUtilities errorWithCode:OIDErrorCodeUserCanceledAuthorizationFlow
-                             underlyingError:error
-                                 description:nil];
-        [_session failExternalUserAgentFlowWithError:safariError];
-      }
-    }];
-    _authenticationVC = authenticationVC;
-    openedSafari = [authenticationVC start];
-  } else if (@available(iOS 9.0, *)) {
+//  if (@available(iOS 11.0, *)) {
+//    NSString *redirectScheme = request.redirectScheme;
+//    SFAuthenticationSession* authenticationVC =
+//        [[SFAuthenticationSession alloc] initWithURL:requestURL
+//                                   callbackURLScheme:redirectScheme
+//                                   completionHandler:^(NSURL * _Nullable callbackURL,
+//                                                       NSError * _Nullable error) {
+//      _authenticationVC = nil;
+//      if (callbackURL) {
+//        [_session resumeExternalUserAgentFlowWithURL:callbackURL];
+//      } else {
+//        NSError *safariError =
+//            [OIDErrorUtilities errorWithCode:OIDErrorCodeUserCanceledAuthorizationFlow
+//                             underlyingError:error
+//                                 description:nil];
+//        [_session failExternalUserAgentFlowWithError:safariError];
+//      }
+//    }];
+//    _authenticationVC = authenticationVC;
+//    openedSafari = [authenticationVC start];
+//  } else
+//
+    //Only going to use SFSafariViewController as we don't want the SFAuthenticationSession popup
+      if (@available(iOS 9.0, *)) {
     SFSafariViewController *safariVC =
         [[[self class] safariViewControllerFactory] safariViewControllerWithURL:requestURL];
     safariVC.delegate = self;
@@ -138,15 +141,16 @@ static id<OIDSafariViewControllerFactory> __nullable gSafariViewControllerFactor
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpartial-availability"
   SFSafariViewController *safariVC = _safariVC;
-  SFAuthenticationSession *authenticationVC = _authenticationVC;
+//  SFAuthenticationSession *authenticationVC = _authenticationVC;
 #pragma clang diagnostic pop
   
   [self cleanUp];
   
-  if (@available(iOS 11.0, *)) {
-    [authenticationVC cancel];
-    if (completion) completion();
-  } else if (@available(iOS 9.0, *)) {
+//  if (@available(iOS 11.0, *)) {
+//    [authenticationVC cancel];
+//    if (completion) completion();
+//  } else
+      if (@available(iOS 9.0, *)) {
     if (safariVC) {
       [safariVC dismissViewControllerAnimated:YES completion:completion];
     } else {
