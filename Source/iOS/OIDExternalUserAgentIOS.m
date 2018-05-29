@@ -77,59 +77,55 @@ static id<OIDSafariViewControllerFactory> __nullable gSafariViewControllerFactor
 }
 
 - (BOOL)presentExternalUserAgentRequest:(id<OIDExternalUserAgentRequest>)request
-                                session:(id<OIDExternalUserAgentSession>)session {
-  if (_externalUserAgentFlowInProgress) {
-    // TODO: Handle errors as authorization is already in progress.
-    return NO;
-  }
+                                session:(id<OIDExternalUserAgentSession>)session
+{
+    if (_externalUserAgentFlowInProgress)
+    {
+        // TODO: Handle errors as authorization is already in progress.
+        return NO;
+    }
 
-  _externalUserAgentFlowInProgress = YES;
-  _session = session;
-  BOOL openedSafari = NO;
-  NSURL *requestURL = [request externalUserAgentRequestURL];
-
-//  if (@available(iOS 11.0, *)) {
-//    NSString *redirectScheme = request.redirectScheme;
-//    SFAuthenticationSession* authenticationVC =
-//        [[SFAuthenticationSession alloc] initWithURL:requestURL
-//                                   callbackURLScheme:redirectScheme
-//                                   completionHandler:^(NSURL * _Nullable callbackURL,
-//                                                       NSError * _Nullable error) {
-//      _authenticationVC = nil;
-//      if (callbackURL) {
-//        [_session resumeExternalUserAgentFlowWithURL:callbackURL];
-//      } else {
-//        NSError *safariError =
-//            [OIDErrorUtilities errorWithCode:OIDErrorCodeUserCanceledAuthorizationFlow
-//                             underlyingError:error
-//                                 description:nil];
-//        [_session failExternalUserAgentFlowWithError:safariError];
-//      }
-//    }];
-//    _authenticationVC = authenticationVC;
-//    openedSafari = [authenticationVC start];
-//  } else
-//
+    _externalUserAgentFlowInProgress = YES;
+    _session = session;
+    BOOL openedSafari = NO;
+    NSURL *requestURL = [request externalUserAgentRequestURL];
+    
     //Only going to use SFSafariViewController as we don't want the SFAuthenticationSession popup
-      if (@available(iOS 9.0, *)) {
-    SFSafariViewController *safariVC =
-        [[[self class] safariViewControllerFactory] safariViewControllerWithURL:requestURL];
-    safariVC.delegate = self;
-    _safariVC = safariVC;
-    [_presentingViewController presentViewController:safariVC animated:YES completion:nil];
-    openedSafari = YES;
-  } else {
-    openedSafari = [[UIApplication sharedApplication] openURL:requestURL];
-  }
-
-  if (!openedSafari) {
-    [self cleanUp];
-    NSError *safariError = [OIDErrorUtilities errorWithCode:OIDErrorCodeSafariOpenError
-                                            underlyingError:nil
-                                                description:@"Unable to open Safari."];
-    [session failExternalUserAgentFlowWithError:safariError];
-  }
-  return openedSafari;
+    
+    if (_presentingViewController.presentedViewController != nil &&
+        [_presentingViewController.presentedViewController isKindOfClass:[SFSafariViewController class]] == true)
+    {
+        _safariVC = (SFSafariViewController *)_presentingViewController.presentedViewController;
+        openedSafari = true;
+    }
+    else
+    {
+        if (@available(iOS 9.0, *))
+        {
+            SFSafariViewController *safariVC = [[[self class] safariViewControllerFactory] safariViewControllerWithURL:requestURL];
+            safariVC.delegate = self;
+            _safariVC = safariVC;
+            [_presentingViewController presentViewController:safariVC
+                                                    animated:YES
+                                                  completion:nil];
+            openedSafari = YES;
+        }
+        else
+        {
+            openedSafari = [[UIApplication sharedApplication] openURL:requestURL];
+        }
+    }
+    
+    if (openedSafari == NO)
+    {
+        [self cleanUp];
+        NSError *safariError = [OIDErrorUtilities errorWithCode:OIDErrorCodeSafariOpenError
+                                                underlyingError:nil
+                                                    description:@"Unable to open Safari."];
+        [session failExternalUserAgentFlowWithError:safariError];
+    }
+    
+    return openedSafari;
 }
 
 - (void)dismissExternalUserAgentAnimated:(BOOL)animated completion:(void (^)(void))completion {
